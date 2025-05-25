@@ -1,32 +1,40 @@
-// index.js
-// where your node app starts
+const express = require('express');
+const app = express();
 
-// init project
-var express = require('express');
-var app = express();
+const port = process.env.PORT || 3000;
 
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
-
-// http://expressjs.com/en/starter/static-files.html
+// Serve static files from public folder (for the front-end)
 app.use(express.static('public'));
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (req, res) {
-  res.sendFile(__dirname + '/views/index.html');
+app.get('/api/:date?', (req, res) => {
+  let dateString = req.params.date;
+
+  // If no date parameter, use current date
+  if (!dateString) {
+    const now = new Date();
+    return res.json({
+      unix: now.getTime(),
+      utc: now.toUTCString()
+    });
+  }
+
+  // If date string is a number (timestamp), parse it to int
+  if (!isNaN(dateString)) {
+    dateString = parseInt(dateString);
+  }
+
+  const date = new Date(dateString);
+
+  if (date.toString() === "Invalid Date") {
+    return res.json({ error: "Invalid Date" });
+  }
+
+  res.json({
+    unix: date.getTime(),
+    utc: date.toUTCString()
+  });
 });
 
-
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
-});
-
-
-
-// Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+app.listen(port, () => {
+  console.log(`Timestamp Microservice listening on port ${port}`);
 });
